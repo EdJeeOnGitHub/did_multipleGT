@@ -1,0 +1,12 @@
+Package: didmultipleGT
+Title: Mutliple Group-Time Period Diff-In-Diff Estimation
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Ed",
+           family = "Jee",
+           role = c("aut", "cre"),
+           email = "edjee96@gmail.com")
+Description: R package to estimate treatment effect in DID designs with many groups and periods using methods described inhttps://papers.ssrn.com/sol3/papers.cfm?abstract_id=3148607.
+License: MIT
+Encoding: UTF-8
+LazyData: true
