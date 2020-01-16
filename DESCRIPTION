@@ -10,3 +10,5 @@ Description: R package to estimate treatment effect in DID designs with many gro
 License: MIT
 Encoding: UTF-8
 LazyData: true
+Suggests: 
+    testthat
