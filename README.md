@@ -1,4 +1,7 @@
 # did_multipleGT
+![](https://github.com/EdJeeOnGitHub/did_multipleGT/workflows/R-CMD-check/badge.svg)
+
+
 R package to estimate treatment effect in DID designs with many groups and periods.
 
 __WIP__
