@@ -1,10 +1,88 @@
 
 
-
-
-
 # Program 1
-did_multiplegt_core <- function(data){
+did_multiplegt <- function(data,
+                           variable_list,
+                           RECAT_treatment = NULL,
+                           THRESHOLD_stable_treatment = 0,
+                           trends_nonparam = NULL,
+                           trends_lin = NULL,
+                           controls,
+                           weight = NULL,
+                           placebo = 0,
+                           dynamic = 0,
+                           breps = 0,
+                           cluster,
+                           covariances = FALSE){
+
+  # Performs sanity checks and renames some variables such as
+  # outcome_XX etc.
+  check_output <- did_multiplegt_check(data = data,
+                                       variable_list = variable_list,
+                                       RECAT_treatment = RECAT_treatment,
+                                       THRESHOLD_stable_treatment = THRESHOLD_stable_treatment,
+                                       trends_nonparam = trends_nonparam,
+                                       trends_lin = trends_lin,
+                                       controls = controls,
+                                       weight = weight,
+                                       placebo = placebo,
+                                       dynamic = dynamic,
+                                       breps = breps,
+                                       cluster = cluster,
+                                       covariances = covariances
+                                       )
+  
+  
+  if (is.null(weight)) {
+    # If weight isn't specified collapse data at (g, t) level 
+    collapsed_df <- aggregate(formula = cbind(outcome_XX, treatment_XX, d_cat_group_XX) ~ group_XX + time_XX, data = check_output, FUN = mean)
+    # Hacky way to get number of obs per group - probably a better way to do this
+    n_by_group <- aggregate(formula = outcome_XX  ~ group_XX + time_XX, data = check_output, FUN = length)
+    collapsed_df$counter <- n_by_group$outcome_XX
+  } else { # if weight is specified just use weight as counter
+    collapsed_df <- check_output
+    collapsed_df$counter <- check_output[, weight]
+  }
+  
+   # Ordering by group and time
+   collapsed_df <- collapsed_df[order(collapsed_df$group_XX, collapsed_df$time_XX), ] 
+   # Generating first diffed Y and treatment
+   collapsed_df$diff_y_XX <- with(collapsed_df, ave(outcome_XX, group_XX, FUN = function(x){c(NA, diff(x))}))
+   collapsed_df$diff_d_XX <- with(collapsed_df, ave(treatment_XX, group_XX, FUN = function(x){c(NA, diff(x))}))
+   # Lag D_cat
+   collapsed_df$lag_d_cat_group_XX <- with(collapsed_df, ave(d_cat_group_XX, group_XX, FUN = function(x){c(lag(x), NA)}))
+   did_multiplegt_core(data = collapsed_df,
+                       THRESHOLD_stable_treatment = THRESHOLD_stable_treatment,
+                       trends_nonparam = trends_nonparam,
+                       trends_lin = trends_lin,
+                       controls = controls)
+   
+   
+   
+}
+
+
+did_multiplegt_core <- function(data,
+                                THRESHOLD_stable_treatment = 0,
+                                trends_nonparam = NULL,
+                                trends_lin = NULL,
+                                controls,
+                                time,
+                                group_int,
+                                max_time = 0,
+                                counter_placebo = 0,
+                                counter_dynamic = 0,
+                                bootstrap_rep = 0){
+  # Looping over time periods
+  for (time_t in unique(data$time_XX)) {
+    
+    D_min <- min(data[data$time_XX == time_t, "lag_d_cat_group_XX"])
+    D_max <- max(data[data$time_XX == time_t, "lag_d_cat_group_XX"])
+    # Looping over values of lag_D at time t
+    for (d in D_min:D_max) {
+      
+    }
+  }
   
 }
 
@@ -29,7 +107,7 @@ did_multiplegt_core <- function(data){
 #' @export
 #'
 #' @examples
-did_multipleGT_check <- function(data,
+did_multiplegt_check <- function(data,
                                  variable_list,
                                  RECAT_treatment = NULL,
                                  THRESHOLD_stable_treatment = 0,
@@ -52,9 +130,8 @@ did_multipleGT_check <- function(data,
   # TODO: Just pass these as args directly instead of a list?
   data$outcome_XX <- data[, variable_list[1]]
   data$group_XX <-  data[,variable_list[2]]
-  data$time_XX <- with(data, ave(rep(1, nrow(data)), variable_list[3], FUN = seq_along))
+  data$time_XX <- factor(data[, variable_list[3]]) # I'm 60% certain this will replicate stata's `group()`
   data$treatment_XX <- data[, variable_list[4]]
-  
   # When the weight option is specified, the data has to be at the (g,t) level.
   n_by_group <- aggregate(formula = outcome_XX ~ group_XX + time_XX, data = data, FUN = length)
   if (max(n_by_group$outcome_XX) > 1 & !is.null(weight)) {
@@ -75,7 +152,7 @@ did_multipleGT_check <- function(data,
   }
   #  Creating groups of recategorized treatment, to ensure we have an ordered 
   # treatment with interval of 1 between consecutive values
-  data$d_cat_group_XX <- with(data, ave(rep(1, nrow(data)), D_cat_XX, FUN = seq_along))
+  data$d_cat_group_XX <- factor(data[, "D_cat_XX"])
   if (length(unique(data$d_cat_group_XX)) == 1) {
     stop("Either the treatment variable or the recategorized treatment in the 
          recat_treatment option takes only one value, the command cannot run.")
@@ -92,12 +169,12 @@ did_multipleGT_check <- function(data,
   }
   
   # Checking that number of placebos requested is admissible
-  if (placebo > (max(data$time_XX) - 2)) {
+  if (placebo > (length(unique(data$time_XX)) - 2)) {
     stop("The number of placebo estimates you have requested is too large:
          it should be at most equal to the number of time periods in your data minus 2.")
   }
   # Checking that number of dynamic effects requested is admissible
-  if (dynamic > (max(data$time_XX) - 2)) {
+  if (dynamic > (length(unique(data$time_XX)) - 2)) {
     stop("The number of dynamic effects you have requested is too large:
          it should be at most equal to the number of time periods in your data minus 2.")
   }
