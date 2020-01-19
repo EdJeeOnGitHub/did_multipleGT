@@ -1,7 +1,10 @@
 
 
+
+
+
 # Program 1
-did_multiplegt <- function(){
+did_multiplegt_core <- function(data){
   
 }
 
@@ -48,10 +51,10 @@ did_multipleGT_check <- function(data,
   
   # Creating the Y, G, T, D variables
   # TODO: Just pass these as args directly instead of a list?
-  data$outcome_XX <- data$variable_list[1]
-  data$group_XX <-  data$variable_list[2]
+  data$outcome_XX <- data[, variable_list[1]]
+  data$group_XX <-  data[,variable_list[2]]
   data$time_XX <- with(data, ave(rep(1, nrow(data)), variable_list[3], FUN = seq_along))
-  data$treatment_XX <- data$variable_list[4]
+  data$treatment_XX <- data[, variable_list[4]]
   
   # When the weight option is specified, the data has to be at the (g,t) level.
   n_by_group <- aggregate(outcome_XX ~ group_XX + time_XX, data = data, FUN = length)
