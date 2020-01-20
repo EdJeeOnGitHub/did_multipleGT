@@ -149,8 +149,18 @@ did_multipleGT_results <- function(data,
   # TODO: pass arguments to did_multiplegt_estim (maybe same options object for all funcs?)
   if (breps > 0) {
     too_many_controls <- 0
+    # TODO: set up df cols below appropriately
+    bootstrap_df <- data.frame(iteration = numeric(),
+                               effect = numeric())
     for (i in 1:breps) {
+      # print iteration
+      if (i %% 100 == 0){
+        print(paste0("Iteration: ", i, " of ", breps))
+      }
       bootstrap_sample <- sample(data, 1L) # psuedocode
+      # TODO: sampling without preexisting package
+      # could use sample_n(data, nrow(data), replace=TRUE)
+      # from dplyr/momocs
       bootstrap_rep <- 1
 
       did_multiplegt_estim <- did_multiplegt_estim(data,
@@ -166,7 +176,7 @@ did_multipleGT_results <- function(data,
                                                    breps,
                                                    cluster,
                                                    covariances)
-      # TODO: put into matrix
+      bootstrap_df[i, iteration] <- i
     }
     # TODO: put into matrix
   }
@@ -194,6 +204,10 @@ did_multipleGT_results <- function(data,
   # initialising the too many controls scalar
   too_many_controls <- 0
 
+  # TODO: figure out what's happening here
+  # presumably its collecting central estimates
+  # (with the above procedure giving SEs)
+  # before outputting everything to a table?
   did_multiplegt_estim <- did_multiplegt_estim(data,
                                                variable_list,
                                                RECAT_treatment,
