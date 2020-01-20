@@ -145,5 +145,27 @@ did_multipleGT_results <- function(data,
                                    breps,
                                    cluster,
                                    covariances){
+  # TODO: add clusters in bootstrap_sample
+  # TODO: pass arguments to did_multiplegt_estim (maybe same options object for all funcs?)
+  if (breps > 0) {
+    too_many_controls <- 0
+    for (i in 1:breps) {
+      bootstrap_sample <- sample(data, 1L) # psuedocode
+      bootstrap_rep <- 1
+
+      did_multiplegt_estim <- did_multiplegt_estim(options) # psuedocode
+      # TODO: put into matrix
+    }
+    # TODO: put into matrix
+  }
+  # TODO: error if too many controls
+
+  # indicate that program will run main estimation
+  bootstrap_rep <- 0
+  # initialising the too many controls scalar
+  too_many_controls <- 0
+
+  did_multiplegt_estim <- did_multiplegt_estim(options) # psuedocode
+  # TODO: error if too many controls
 
 }
