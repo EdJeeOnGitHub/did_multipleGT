@@ -153,7 +153,19 @@ did_multipleGT_results <- function(data,
       bootstrap_sample <- sample(data, 1L) # psuedocode
       bootstrap_rep <- 1
 
-      did_multiplegt_estim <- did_multiplegt_estim(options) # psuedocode
+      did_multiplegt_estim <- did_multiplegt_estim(data,
+                                                   variable_list,
+                                                   RECAT_treatment,
+                                                   THRESHOLD_stable_treatment,
+                                                   trends_nonparam,
+                                                   trends_lin,
+                                                   controls,
+                                                   counter,
+                                                   placebo,
+                                                   dynamic,
+                                                   breps,
+                                                   cluster,
+                                                   covariances)
       # TODO: put into matrix
     }
     # TODO: put into matrix
@@ -165,7 +177,19 @@ did_multipleGT_results <- function(data,
   # initialising the too many controls scalar
   too_many_controls <- 0
 
-  did_multiplegt_estim <- did_multiplegt_estim(options) # psuedocode
+  did_multiplegt_estim <- did_multiplegt_estim(data,
+                                               variable_list,
+                                               RECAT_treatment,
+                                               THRESHOLD_stable_treatment,
+                                               trends_nonparam,
+                                               trends_lin,
+                                               controls,
+                                               counter,
+                                               placebo,
+                                               dynamic,
+                                               breps,
+                                               cluster,
+                                               covariances)
   # TODO: error if too many controls
 
 }
