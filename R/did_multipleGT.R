@@ -170,7 +170,24 @@ did_multipleGT_results <- function(data,
     }
     # TODO: put into matrix
   }
-  # TODO: error if too many controls
+
+  if (too_many_controls == 1) {
+    error_message <- paste0(
+      "In some bootstrap replications, the command had to run regressions with",
+      "\n",
+      "more control variables than the sample size, so the controls could not",
+      "\n",
+      "be accounted for. Typically, this issue only affects a small number of",
+      "\n",
+      "observations. If you still want to solve this problem, you may reduce",
+      "\n",
+      "the number of control variables. You may also use the recat_treatment",
+      "\n",
+      "option to discretize your treatment. Finally, you could reduce the",
+      "\n",
+      "number of placebos and/or dynamic effects requested."
+    )
+    stop(error_message)
 
   # indicate that program will run main estimation
   bootstrap_rep <- 0
@@ -190,6 +207,24 @@ did_multipleGT_results <- function(data,
                                                breps,
                                                cluster,
                                                covariances)
-  # TODO: error if too many controls
+
+  if (too_many_controls == 1) {
+    error_message <- paste0(
+      "At some point, the command had to run regressions with more control",
+      "\n",
+      "variables than the sample size, so the controls could not be accounted",
+      "\n",
+      "for. Typically, this issue only affects a small number of observations.",
+      "\n",
+      "If you still want to solve this problem, you may reduce the number of",
+      "\n",
+      "control variables. You may also use the recat_treatment option to",
+      "\n",
+      "discretize your treatment. Finally, you could reduce the number of",
+      "\n",
+      "placebos and/or dynamic effects requested."
+    )
+    stop(error_message)
+  }
 
 }
