@@ -14,7 +14,6 @@ did_multiplegt <- function(data,
                            breps = 0,
                            cluster,
                            covariances = FALSE){
-
   # Performs sanity checks and renames some variables such as
   # outcome_XX etc.
   check_output <- did_multiplegt_check(data = data,
@@ -74,14 +73,49 @@ did_multiplegt_core <- function(data,
                                 counter_dynamic = 0,
                                 bootstrap_rep = 0){
   # Looping over time periods
-  for (time_t in unique(data$time_XX)) {
+  for (time_t in unique(data$time_XX)[2:length(unique(data$time_XX))]) {
     
     D_min <- min(data[data$time_XX == time_t, "lag_d_cat_group_XX"])
     D_max <- max(data[data$time_XX == time_t, "lag_d_cat_group_XX"])
     # Looping over values of lag_D at time t
     for (d in D_min:D_max) {
       
+      data$cond_stable <- abs(data$diff_d_XX) <= THRESHOLD_stable_treatment & data$lag_d_cat_group_XX == d 
+      n_obs_subset <- nrow(data[data$cond_stable == TRUE, ]) 
+      if (n_obs_subset <= length(controls)) {
+        stop("Too many controls.")
+      }
+      
+      # No trends - put controls here TODO
+      # handle NA better TODO
+      model_diff_y_XX <- lm(data = data[data$cond_stable == TRUE, ],
+                             formula = diff_y_XX ~ 1)
+      
+      predictions_diff_y_XX <- predict(model_diff_y_XX,
+              data[data$lag_d_cat_group_XX == d & !is.na(data$lag_d_cat_group_XX), ])
+      resids_diff_y_XX <- data[data$lag_d_cat_group_XX == d & !is.na(data$lag_d_cat_group_XX), "diff_y_XX"] - predictions_diff_y_XX
+      data[data$lag_d_cat_group_XX == d & !is.na(data$lag_d_cat_group_XX), "diff_y_XX"] <- resids_diff_y_XX
+      
     }
+  }
+  
+  for (time_t in unique(data$time_XX)[2:length(unique(data$time_XX))]) {
+    D_min <- min(data[data$time_XX == time_t, "lag_d_cat_group_XX"])
+    D_max <- max(data[data$time_XX == time_t, "lag_d_cat_group_XX"])
+    
+    for (d in D_min:D_max) {
+      data$cond_increase_t <- (data$diff_d_XX > THRESHOLD_stable_treatment
+                               & data$lag_d_cat_group_XX == d
+                               & data$time_XX == time_t
+                               & !is.na(data$diff_d_XX))
+      data$cond_stable_t <- (abs(data$diff_d_XX) <= THRESHOLD_stable_treatment
+                             & data$lag_d_cat_group_XX == d
+                             & data$time_XX == time_t)
+      data$cond_decrease_t <- (data$diff_d_XX < -1*THRESHOLD_stable_treatment
+                               & data$lag_d_cat_group_XX == d
+                               & data$time_XX == time_t)
+    }
+    
   }
 }
 
@@ -129,7 +163,7 @@ did_multiplegt_check <- function(data,
   # TODO: Just pass these as args directly instead of a list?
   data$outcome_XX <- data[, variable_list[1]]
   data$group_XX <-  data[,variable_list[2]]
-  data$time_XX <- factor(data[, variable_list[3]]) # I'm 60% certain this will replicate stata's `group()`
+  data$time_XX <- data[, variable_list[3]] 
   data$treatment_XX <- data[, variable_list[4]]
   # When the weight option is specified, the data has to be at the (g,t) level.
   n_by_group <- aggregate(formula = outcome_XX ~ group_XX + time_XX, data = data, FUN = length)
@@ -275,6 +309,8 @@ did_multipleGT_results <- function(data,
       "number of placebos and/or dynamic effects requested."
     )
     stop(error_message)
+  }
+  
 
   # indicate that program will run main estimation
   bootstrap_rep <- 0
