@@ -103,6 +103,9 @@ did_multiplegt_core <- function(data,
     D_min <- min(data[data$time_XX == time_t, "lag_d_cat_group_XX"])
     D_max <- max(data[data$time_XX == time_t, "lag_d_cat_group_XX"])
     
+    effect <- 0
+    N_effect <- 0
+    denom <- 0
     for (d in D_min:D_max) {
       data$cond_increase_t <- (data$diff_d_XX > THRESHOLD_stable_treatment
                                & data$lag_d_cat_group_XX == d
@@ -114,9 +117,42 @@ did_multiplegt_core <- function(data,
       data$cond_decrease_t <- (data$diff_d_XX < -1*THRESHOLD_stable_treatment
                                & data$lag_d_cat_group_XX == d
                                & data$time_XX == time_t)
+      
+      n_increase <- nrow(data[data$cond_increase_t == TRUE, ])
+      n_stable <- nrow(data[data$cond_stable_t == TRUE, ])
+      n_decrease <- nrow(data[data$cond_decrease_t == TRUE, ])
+      
+      
+      if ((n_increase * n_stable) > 0) {
+        browser()
+        data$treatment_dummy <- as.numeric(data$cond_increase)
+
+        did_model <- lm(data = data[data$cond_increase_t == TRUE | data$cond_stable_t == TRUE,],
+                        formula = diff_y_XX ~ treatment_dummy)
+        effect <- effect + did_model$coefficients[["treatment_dummy"]] * nobs(did_model)
+
+        did_denom_model <- lm(data = data[data$cond_increase_t == TRUE | data$cond_stable_t == TRUE,],
+                              formula = diff_d_XX ~ treatment_dummy)
+        denom <- denom + did_denom_model$coefficients[["treatment_dummy"]] * nobs(did_denom_model)
+      }
+      if ((n_decrease * n_stable) > 0) {
+        browser()
+        data$treatment_dummy <- as.numeric(data$cond_decrease_t)
+        
+        did_model <- lm(data = data[data$cond_decrease_t == TRUE | data$cond_stable_t == TRUE,],
+                        formula = diff_y_XX ~ treatment_dummy)
+        effect <- effect - did_model$coefficients[["treatment_dummy"]] * nobs(did_model)
+        
+        did_denom_model <- lm(data = data[data$cond_decrease_t == TRUE | data$cond_stable_t == TRUE,],
+                              formula = diff_d_XX ~ treatment_dummy)
+        denom <- denom - did_denom_model$coefficients[["treatment_dummy"]] * nobs(did_denom_model)
+      }
+      
     }
-    
   }
+  
+  final_effect <- effect / denom
+  return(final_effect)
 }
 
 
